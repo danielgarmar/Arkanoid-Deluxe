@@ -1,9 +1,9 @@
-# Arkanoid-M2
+# Arkanoid-M2 
 En este segundo hito construiremos una versión básica de Arkanoid empleando `pygame`. El objetivo es que el alumnado practique el manejo de bucles del juego reutilizando una clase preparada a modo de plantilla.
 
 Para no empezar desde cero, se entrega un fichero `arkanoid_game.py` con la estructura del juego el cual importa un fichero core con todo lo que se necesita. Cada método incluye instrucciones `TODO` que debes resolver.
 
-> Cómo entregar: se pide que creeis un fork del repositorio, una vez completada la plantilla, subidlo a github, asimismo comprimid el proyecto en un archivo `arkanoid-"Nombre del grupo".zip` y subidlo al formulario correspondiente. Solo es necesario que un alumno por grupo suba el fichero. 
+> Cómo entregar: se pide que creeis un fork del repositorio, una vez completada la plantilla, subidlo a github, asimismo comprimid el proyecto en un archivo `arkanoid-"Nombre del grupo".zip` y subidlo al formulario correspondiente. Solo es necesario que un alumno por grupo suba el fichero.
 
 ## Requisitos previos
 1. Asegúrate de tener Python 3.10 o superior.
