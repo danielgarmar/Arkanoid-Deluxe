@@ -82,3 +82,5 @@ Completa los métodos marcados con `TODO` siguiendo el orden propuesto y respeta
 - Control del flujo de juego (inicialización, loop principal y cierre limpio).
 - Gestión de colisiones y actualización de puntuación/vidas.
 - Apartado opcional: se valorará positivamente añadir niveles extra, mejoras visuales o efectos de sonido siempre que no rompan la estructura base.
+- Se tendrán en cuenta el uso de todas las buenas prácticas vistas en teoría, incluyendo la inclusión de un fichero readme.md.
+- 
