@@ -78,15 +78,15 @@ def crear_bloques(self) -> None:
 
 @arkanoid_method
 def procesar_input(self) -> None:
-    self.obtener_estado_teclas()
-    if self.KEY_LEFT or self.KEY_A:
+    teclas = self.obtener_estado_teclas()
+    if teclas[self.KEY_LEFT] or teclas[self.KEY_A]:
         if self.paddle.x > self.paddle.width/2:
             self.paddle.x -= self.PADDLE_SPEED
             self.paddle.x = max(self.paddle.x, 0)
         else:
             self.paddle.x = self.paddle.width/2
 
-    if self.KEY_RIGHT or self.KEY_D: 
+    if teclas[self.KEY_RIGHT] or teclas[self.KEY_D]: 
         if self.paddle.x < self.SCREEN_WIDTH - self.paddle.width/2:
             self.paddle.x += self.PADDLE_SPEED
             self.paddle.x = min(self.paddle.x, self.SCREEN_WIDTH - self.paddle.width)
