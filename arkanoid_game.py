@@ -1,4 +1,4 @@
-"""Plantilla del juego Arkanoid para el hito M2
+v"""Plantilla del juego Arkanoid para el hito M2
 Completa los métodos marcados con TODO respetando las anotaciones de tipo y la
 estructura de la clase. El objetivo es construir un prototipo jugable usando
 pygame que cargue bloques desde un fichero de nivel basado en caracteres.
@@ -80,14 +80,14 @@ def crear_bloques(self) -> None:
 def procesar_input(self) -> None:
     teclas = self.obtener_estado_teclas()
     if teclas[self.KEY_LEFT] or teclas[self.KEY_A]:
-        if self.paddle.x > self.paddle.width/2:
+        if self.paddle.x < self.SCREEN_WIDTH:
             self.paddle.x -= self.PADDLE_SPEED
             self.paddle.x = max(self.paddle.x, 0)
         else:
-            self.paddle.x = self.paddle.width/2
+            self.paddle.x = self.SCREEN_WIDTH - self.paddle.width/2
 
     if teclas[self.KEY_RIGHT] or teclas[self.KEY_D]: 
-        if self.paddle.x < self.SCREEN_WIDTH - self.paddle.width/2:
+        if self.paddle.x < self.SCREEN_WIDTH:
             self.paddle.x += self.PADDLE_SPEED
             self.paddle.x = min(self.paddle.x, self.SCREEN_WIDTH - self.paddle.width)
         else:
