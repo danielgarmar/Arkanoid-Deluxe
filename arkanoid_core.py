@@ -38,7 +38,7 @@ class ArkanoidGame:
     # Paleta
     PADDLE_SIZE = (120, 18)
     PADDLE_OFFSET = 48
-    PADDLE_SPEED = 6.0
+    PADDLE_SPEED = 8.0
 
     # Bola
     BALL_RADIUS = 10
@@ -132,7 +132,10 @@ class ArkanoidGame:
         """Inicializa pygame, la ventana y los recursos principales."""
         if self.screen is not None:
             return
-        
+
+        # Permite ejecutar en entornos sin servidor gráfico (tests/CI).
+        #if "SDL_VIDEODRIVER" not in os.environ and not os.environ.get("DISPLAY"):
+        #   os.environ["SDL_VIDEODRIVER"] = "dummy"
 
         pygame.init()
         pygame.display.set_caption("Arkanoid M2")
