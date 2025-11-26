@@ -27,8 +27,8 @@ class ArkanoidGame:
     """Contenedor con la lógica común del Arkanoid simplificado."""
 
     # Configuración visual y de juego
-    SCREEN_WIDTH: int = 800
-    SCREEN_HEIGHT: int = 600
+    SCREEN_WIDTH: int = 1500
+    SCREEN_HEIGHT: int = 800
     FPS: int = 60
 
     BACKGROUND_COLOR = (12, 20, 32)
@@ -38,11 +38,11 @@ class ArkanoidGame:
     # Paleta
     PADDLE_SIZE = (120, 18)
     PADDLE_OFFSET = 48
-    PADDLE_SPEED = 8.0
+    PADDLE_SPEED = 10.0
 
     # Bola
     BALL_RADIUS = 10
-    BALL_SPEED = 6.0
+    BALL_SPEED = 8.0
 
     # Bloques
     BLOCK_WIDTH = 60
@@ -55,12 +55,15 @@ class ArkanoidGame:
         "#": (214, 103, 103),
         "@": (102, 170, 214),
         "%": (234, 190, 104),
+        "=": (150, 150, 150),
     }
     BLOCK_POINTS = {
         "#": 50,
         "@": 75,
         "%": 120,
+        "=": 100,
     }
+
 
     # Entradas y eventos (para minimizar el uso directo de pygame en la plantilla)
     KEY_LEFT = pygame.K_LEFT
