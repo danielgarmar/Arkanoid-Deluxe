@@ -1,4 +1,4 @@
-v"""Plantilla del juego Arkanoid para el hito M2
+"""Plantilla del juego Arkanoid para el hito M2
 Completa los métodos marcados con TODO respetando las anotaciones de tipo y la
 estructura de la clase. El objetivo es construir un prototipo jugable usando
 pygame que cargue bloques desde un fichero de nivel basado en caracteres.
@@ -140,10 +140,20 @@ def actualizar_bola(self) -> None:
             break
 
     if bloque_golpeado >= 0:
-        rect_bloque = self.blocks.pop(bloque_golpeado)
-        simbolo = self.block_symbols.pop(bloque_golpeado)
-        self.block_colors.pop(bloque_golpeado)
+        # Obtén el símbolo del bloque golpeado y otorga puntos por el impacto
+        simbolo = self.block_symbols[bloque_golpeado]
         self.score += self.BLOCK_POINTS.get(simbolo, 0)
+
+        # Si el bloque es '=' lo transformamos en '#' (no se elimina a la primera golpe)
+        if simbolo == "=":
+            self.block_symbols[bloque_golpeado] = "#"
+            self.block_colors[bloque_golpeado] = self.BLOCK_COLORS["#"]
+            rect_bloque = self.blocks[bloque_golpeado]
+        else:
+            # Para cualquier otro símbolo, se elimina el bloque como antes
+            rect_bloque = self.blocks.pop(bloque_golpeado)
+            self.block_symbols.pop(bloque_golpeado)
+            self.block_colors.pop(bloque_golpeado)
 
         rect_prev = self.crear_rect(
             int(posicion_anterior.x - self.BALL_RADIUS),
@@ -215,7 +225,7 @@ def run(self) -> None:
                 self.running = False
             elif evento.type == self.EVENT_KEYDOWN and evento.key == self.KEY_ESCAPE:
                     self.running = False
-
+                    
             if not self.running:
                 break
         self.procesar_input()
