@@ -7,6 +7,7 @@ pygame que cargue bloques desde un fichero de nivel basado en caracteres.
 from pathlib import Path
 from arkanoid_core import *
 from pygame import Vector2
+import sys
 # --------------------------------------------------------------------- #
 # Métodos a completar por el alumnado
 # --------------------------------------------------------------------- #
@@ -15,23 +16,26 @@ from pygame import Vector2
 def cargar_nivel(self) -> list[str]:
     """Lee el fichero de nivel y devuelve la cuadrícula como lista de filas."""
     
-    if not self.level_path:
-        raise FileNotFoundError("No se ha proporcionado ruta de nivel.")
+    if not self.level_path.exists() or not self.level_path.is_file():
+        raise FileNotFoundError(f"No se ha encontrado el nivel: {self.level_path}")
 
-    if not self.level_path.is_file():
-        raise FileNotFoundError(f"El fichero de nivel no existe: {self.level_path}")
-    
-    with open(self.level_path, 'r') as file:
-        lineas = file.read().splitlines()
+    contenido = self.level_path.read_text(encoding="utf-8")
+    lineas = [linea.rstrip("\r") for linea in contenido.splitlines()]
+    cuadricula = [linea for linea in lineas if linea.strip()]
 
-        for linea in lineas:
-            if linea.strip() == "":
-                lineas.remove(linea)
-            if len(lineas[0]) != len(linea.strip()) and linea.strip() != "":
-                raise ValueError("Las líneas del nivel no tienen el mismo ancho.")
-    layout = [linea.strip() for linea in lineas]
-    self.layout = layout
-    return layout
+    if not cuadricula:
+        raise ValueError("El fichero de nivel no contiene filas válidas.")
+
+    ancho = len(cuadricula[0])
+    if ancho == 0:
+        raise ValueError("Las filas del nivel no pueden estar vacías.")
+
+    for fila in cuadricula:
+        if len(fila) != ancho:
+            raise ValueError("Todas las filas del nivel deben tener el mismo ancho.")
+
+    self.layout = cuadricula
+    return self.layout
     # - Comprueba que `self.level_path` existe y es fichero.
     # - Lee su contenido, filtra líneas vacías y valida que todas tienen el mismo ancho.
     # - Guarda el resultado en `self.layout` y devuélvelo.
@@ -40,10 +44,10 @@ def cargar_nivel(self) -> list[str]:
 @arkanoid_method
 def preparar_entidades(self) -> None:
     self.paddle = self.crear_rect(0,0, *self.PADDLE_SIZE)
-    self.paddle.midbottom = (self.SCREEN_WIDTH // 2, self.SCREEN_HEIGHT - self.PADDLE_Y_OFFSET)
+    self.paddle.midbottom = (self.SCREEN_WIDTH // 2, self.SCREEN_HEIGHT - self.PADDLE_OFFSET)
     self.score = 0
     self.lives = 3
-    self.end_message = "Has perdido"
+    self.end_message = ""
     self.reiniciar_bola()
     """Posiciona paleta y bola, y reinicia puntuación y vidas."""
     # - Ajusta el tamaño de `self.paddle` y céntrala usando `midbottom`.
@@ -54,8 +58,8 @@ def preparar_entidades(self) -> None:
 @arkanoid_method
 def crear_bloques(self) -> None:
     self.blocks.clear()
-    self.blocks_colors.clear()
-    self.block_symbols
+    self.block_colors.clear()
+    self.block_symbols.clear()
     
     for fila_idx, fila in enumerate(self.layout):
         for col_idx, simbolo in enumerate(fila):
@@ -75,14 +79,14 @@ def crear_bloques(self) -> None:
 @arkanoid_method
 def procesar_input(self) -> None:
     self.obtener_estado_teclas()
-    if self.teclas_presionadas[self.KEY_LEFT] or self.teclas_presionadas[self.KEY_A]:
+    if self.KEY_LEFT or self.KEY_A:
         if self.paddle.x > self.paddle.width/2:
             self.paddle.x -= self.PADDLE_SPEED
             self.paddle.x = max(self.paddle.x, 0)
         else:
             self.paddle.x = self.paddle.width/2
 
-    if self.teclas_presionadas[self.KEY_RIGHT] or self.teclas_presionadas[self.KEY_D]: 
+    if self.KEY_RIGHT or self.KEY_D: 
         if self.paddle.x < self.SCREEN_WIDTH - self.paddle.width/2:
             self.paddle.x += self.PADDLE_SPEED
             self.paddle.x = min(self.paddle.x, self.SCREEN_WIDTH - self.paddle.width)
@@ -97,23 +101,74 @@ def procesar_input(self) -> None:
 
 @arkanoid_method
 def actualizar_bola(self) -> None:
-    """Actualiza la posición de la bola y resuelve colisiones."""
-    self.ball_pos += self.ball_velocity
+    posicion_anterior = Vector2(self.ball_pos)
+    self.ball_pos = self.ball_pos + self.ball_velocity
     ball_rect = self.obtener_rect_bola()
-    if ball_rect.left <= 0 or ball_rect.right >= self.SCREEN_WIDTH:
+
+    # Rebotes contra paredes laterales
+    if self.ball_pos.x - self.BALL_RADIUS <= 0:
+        self.ball_pos.x = self.BALL_RADIUS
         self.ball_velocity.x *= -1
-    if ball_rect.top <= 0:
+    elif self.ball_pos.x + self.BALL_RADIUS >= self.SCREEN_WIDTH:
+        self.ball_pos.x = self.SCREEN_WIDTH - self.BALL_RADIUS
+        self.ball_velocity.x *= -1
+
+    # Rebote contra la parte superior
+    if self.ball_pos.y - self.BALL_RADIUS <= 0:
+        self.ball_pos.y = self.BALL_RADIUS
         self.ball_velocity.y *= -1
-    if ball_rect.colliderect(self.paddle):
+
+    ball_rect = self.obtener_rect_bola()
+
+    # Colisión con la paleta
+    if ball_rect.colliderect(self.paddle) and self.ball_velocity.y > 0:
+        distancia = (self.ball_pos.x - self.paddle.centerx) / (self.paddle.width / 2)
         self.ball_velocity.y *= -1
-        offset = (ball_rect.centerx - self.paddle.centerx) / (self.paddle.width / 2)
-        self.ball_velocity.x += offset * self.BALL_SPEED * 0.5
-        self.ball_velocity = self.ball_velocity.normalize() * self.BALL_SPEED
-        
-    if not self.blocks or self.blocks == []:
-        self.end_message = "Nivel completado"
-    elif self.lives <= 0:
-        self.end_message = "Game Over"
+        self.ball_velocity.x += distancia * self.BALL_SPEED * 0.5
+        if self.ball_velocity.length_squared() == 0:
+            self.ball_velocity.update(0, -self.BALL_SPEED)
+        else:
+            self.ball_velocity = self.ball_velocity.normalize() * self.BALL_SPEED
+        self.ball_pos.y = self.paddle.top - self.BALL_RADIUS - 1
+        ball_rect = self.obtener_rect_bola()
+
+    # Colisión con bloques
+    bloque_golpeado = -1
+    for idx, rect in enumerate(self.blocks):
+        if ball_rect.colliderect(rect):
+            bloque_golpeado = idx
+            break
+
+    if bloque_golpeado >= 0:
+        rect_bloque = self.blocks.pop(bloque_golpeado)
+        simbolo = self.block_symbols.pop(bloque_golpeado)
+        self.block_colors.pop(bloque_golpeado)
+        self.score += self.BLOCK_POINTS.get(simbolo, 0)
+
+        rect_prev = self.crear_rect(
+            int(posicion_anterior.x - self.BALL_RADIUS),
+            int(posicion_anterior.y - self.BALL_RADIUS),
+            self.BALL_RADIUS * 2,
+            self.BALL_RADIUS * 2,
+        )
+        # Determina si el impacto fue horizontal o vertical para invertir el eje adecuado
+        if rect_prev.right <= rect_bloque.left or rect_prev.left >= rect_bloque.right:
+            self.ball_velocity.x *= -1
+        else:
+            self.ball_velocity.y *= -1
+
+        if not self.blocks:
+            self.end_message = "Nivel completado"
+            self.running = False
+
+    # La bola cae por la parte inferior
+    if self.ball_pos.y - self.BALL_RADIUS > self.SCREEN_HEIGHT:
+        self.lives -= 1
+        if self.lives <= 0:
+            self.end_message = "Fin del juego"
+            self.running = False
+        else:
+            self.reiniciar_bola((0, -1))
     
     # - Suma `self.ball_velocity` a `self.ball_pos` y genera `ball_rect` con `self.obtener_rect_bola()`.
     # - Gestiona rebotes con paredes, paleta y bloques, modificando velocidad y puntuación.
@@ -121,6 +176,10 @@ def actualizar_bola(self) -> None:
 
 @arkanoid_method
 def dibujar_escena(self) -> None:
+    if not self.screen:
+        return
+
+
     self.screen.fill(self.BACKGROUND_COLOR)
     for rect,color in zip (self.blocks, self.block_colors):
         self.dibujar_rectangulo(rect,color)
@@ -129,7 +188,11 @@ def dibujar_escena(self) -> None:
     self.dibujar_circulo((int(self.ball_pos.x),int(self.ball_pos.y)), self.BALL_RADIUS, self.BALL_COLOR)
     self.dibujar_texto(f"Puntos:{self.score}", (20,20))
     self.dibujar_texto(f"Vidas:{self.lives}", (20,50))
-    self.dibujar_texto(self.end_message, (self.SCREEN_WIDTH//2, self.SCREEN_HEIGHT//2), center=True)
+    
+    if self.end_message:
+        texto_x = self.SCREEN_WIDTH // 2 - 110
+        texto_y = self.SCREEN_HEIGHT // 2 - 20
+        self.dibujar_texto(self.end_message, (texto_x, texto_y), grande=True)
 
         
     """Renderiza fondo, bloques, paleta, bola y HUD."""
@@ -145,18 +208,21 @@ def run(self) -> None:
     self.preparar_entidades()
     self.crear_bloques()
 
-    running = True
-    while running == True:
-        for event in self.iterar_eventos():
-            if event.type == pygame.QUIT:
-                running = False
+    self.running = True
+    while self.running:
+        for evento in self.iterar_eventos():
+            if evento.type == self.EVENT_QUIT:
+                self.running = False
+            elif evento.type == self.EVENT_KEYDOWN and evento.key == self.KEY_ESCAPE:
+                    self.running = False
+
+            if not self.running:
+                break
         self.procesar_input()
         self.actualizar_bola()
         self.dibujar_escena()
         self.actualizar_pantalla()
 
-        if self.teclas_presionadas[self.KEY_ESCAPE]:
-            running = False
 
         if self.clock:
             self.clock.tick(self.FPS)
@@ -165,8 +231,7 @@ def run(self) -> None:
             self.dibujar_escena()
             self.actualizar_pantalla()
             self.esperar(2000)
-            running = False
-
+    
     self.finalizar_pygame()
     # - Inicializa recursos (`self.inicializar_pygame`, `self.cargar_nivel`, etc.).
     # - Procesa eventos de `self.iterar_eventos()` y llama a los métodos de actualización/dibujo.
