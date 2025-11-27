@@ -60,8 +60,9 @@ class ArkanoidGame:
     BLOCK_POINTS = {
         "#": 50,
         "@": 75,
-        "%": 120,
+        "%": 125,
         "=": 100,
+
     }
 
 
